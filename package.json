@@ -1,0 +1,446 @@
+{
+  "name": "slurmboard",
+  "displayName": "Slurm Board",
+  "description": "To-do style tracker for your Slurm calculations: running, pending, completed and the ones that died.",
+  "version": "0.5.0",
+  "publisher": "migliaro",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0b3d91",
+    "theme": "dark"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ignaciomigliaro/slurmboard.git"
+  },
+  "homepage": "https://github.com/ignaciomigliaro/slurmboard#readme",
+  "bugs": {
+    "url": "https://github.com/ignaciomigliaro/slurmboard/issues"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "slurm",
+    "hpc",
+    "cluster",
+    "sbatch",
+    "sacct",
+    "job",
+    "queue",
+    "orca",
+    "gaussian",
+    "gromacs",
+    "lammps",
+    "computational chemistry"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "slurmboard",
+          "title": "Slurm Board",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "slurmboard": [
+        {
+          "id": "slurmboard.jobs",
+          "name": "Calculations"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "slurmboard.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.showDismissed",
+        "title": "Show Dismissed",
+        "icon": "$(eye)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.hideDismissed",
+        "title": "Hide Dismissed",
+        "icon": "$(eye-closed)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.openOut",
+        "title": "Open Output (.out)",
+        "icon": "$(output)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.openErr",
+        "title": "Open Error File (.err)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.copyDir",
+        "title": "Copy Directory Path",
+        "icon": "$(copy)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.openTerminal",
+        "title": "Open Terminal Here",
+        "icon": "$(terminal)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.openFolder",
+        "title": "Open Folder in New Window",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.resubmit",
+        "title": "Resubmit",
+        "icon": "$(debug-restart)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.dismiss",
+        "title": "Dismiss",
+        "icon": "$(check)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.restore",
+        "title": "Restore",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.note",
+        "title": "Add / Edit Note\u2026",
+        "icon": "$(note)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.dismissGroup",
+        "title": "Dismiss All in This Group",
+        "icon": "$(check-all)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.editInput",
+        "title": "Edit Input File",
+        "icon": "$(edit)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.resubmitWith",
+        "title": "Resubmit with Options\u2026",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.dismissSome",
+        "title": "Dismiss Several\u2026",
+        "icon": "$(checklist)",
+        "category": "Slurm Board"
+      },
+      {
+        "command": "slurmboard.viewGeometry",
+        "title": "View Geometry",
+        "icon": "$(symbol-structure)",
+        "category": "Slurm Board"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "slurmboard.refresh",
+          "when": "view == slurmboard.jobs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "slurmboard.showDismissed",
+          "when": "view == slurmboard.jobs && !slurmboard.showDismissed",
+          "group": "navigation@2"
+        },
+        {
+          "command": "slurmboard.hideDismissed",
+          "when": "view == slurmboard.jobs && slurmboard.showDismissed",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "slurmboard.viewGeometry",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "inline@0"
+        },
+        {
+          "command": "slurmboard.editInput",
+          "when": "view == slurmboard.jobs && viewItem =~ /hasinput/ && viewItem =~ /resubmittable|dismiss/",
+          "group": "inline@0"
+        },
+        {
+          "command": "slurmboard.resubmit",
+          "when": "view == slurmboard.jobs && viewItem =~ /resubmittable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "slurmboard.openOut",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "inline@2"
+        },
+        {
+          "command": "slurmboard.copyDir",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "inline@3"
+        },
+        {
+          "command": "slurmboard.dismiss",
+          "when": "view == slurmboard.jobs && viewItem =~ /dismissable/",
+          "group": "inline@4"
+        },
+        {
+          "command": "slurmboard.dismissGroup",
+          "when": "view == slurmboard.jobs && viewItem =~ /^group-(attention|completed)/",
+          "group": "inline@1"
+        },
+        {
+          "command": "slurmboard.openOut",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "slurmboard.openErr",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "1_open@2"
+        },
+        {
+          "command": "slurmboard.openTerminal",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "1_open@3"
+        },
+        {
+          "command": "slurmboard.openFolder",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "1_open@4"
+        },
+        {
+          "command": "slurmboard.copyDir",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "slurmboard.resubmit",
+          "when": "view == slurmboard.jobs && viewItem =~ /resubmittable/",
+          "group": "3_act@1"
+        },
+        {
+          "command": "slurmboard.note",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "3_act@2"
+        },
+        {
+          "command": "slurmboard.dismiss",
+          "when": "view == slurmboard.jobs && viewItem =~ /dismissable/",
+          "group": "3_act@3"
+        },
+        {
+          "command": "slurmboard.restore",
+          "when": "view == slurmboard.jobs && viewItem =~ /dismissed/",
+          "group": "3_act@3"
+        },
+        {
+          "command": "slurmboard.editInput",
+          "when": "view == slurmboard.jobs && viewItem =~ /hasinput/",
+          "group": "1_open@0"
+        },
+        {
+          "command": "slurmboard.resubmitWith",
+          "when": "view == slurmboard.jobs && viewItem =~ /resubmittable/",
+          "group": "3_act@1"
+        },
+        {
+          "command": "slurmboard.dismissSome",
+          "when": "view == slurmboard.jobs && viewItem =~ /^group-(attention|completed)/",
+          "group": "inline@0"
+        },
+        {
+          "command": "slurmboard.dismissSome",
+          "when": "view == slurmboard.jobs && viewItem =~ /^group-(attention|completed)/",
+          "group": "3_act@1"
+        },
+        {
+          "command": "slurmboard.viewGeometry",
+          "when": "view == slurmboard.jobs && viewItem =~ /^calc/",
+          "group": "1_open@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "slurmboard.openOut",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.openErr",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.copyDir",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.openTerminal",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.openFolder",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.resubmit",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.dismiss",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.restore",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.note",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.dismissGroup",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.editInput",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.resubmitWith",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.dismissSome",
+          "when": "false"
+        },
+        {
+          "command": "slurmboard.viewGeometry",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Slurm Board",
+      "properties": {
+        "slurmboard.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Python interpreter used to run the bundled slurmboard.py backend."
+        },
+        "slurmboard.refreshInterval": {
+          "type": "number",
+          "default": 120,
+          "minimum": 30,
+          "description": "Seconds between sacct polls."
+        },
+        "slurmboard.notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pop up a notification when a calculation dies or completes."
+        },
+        "slurmboard.completedLimit": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of completed calculations listed."
+        },
+        "slurmboard.programs": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Extra or overriding program profiles used to judge whether a job finished cleanly, e.g. `{\"name\": \"MyCode\", \"detect\": [\"MyCode v\"], \"success\": [\"finished OK\"], \"failure\": [\"FATAL\"], \"inputs\": [\".in\"], \"resubmit\": \"submit_mycode {input}\"}`. Built-in: ORCA, Gaussian, Q-Chem, Psi4, CP2K, xtb, GROMACS, LAMMPS, TeraChem. A profile with the same `name` overrides the built-in one (e.g. set ORCA's `resubmit` to your own submit command).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "detect": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "success": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "failure": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "warnings": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "outputs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resubmit": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        "slurmboard.geometryViewer": {
+          "type": "string",
+          "enum": [
+            "protein-viewer",
+            "matterviz"
+          ],
+          "default": "protein-viewer",
+          "enumDescriptions": [
+            "Protein Viewer (Mol*): xyz, pdb, cif, mol/mol2, sdf, pdbqt, gro",
+            "MatterViz: also VASP, LAMMPS dumps, MD trajectories, cube files"
+          ],
+          "description": "Extension used by \"View Geometry\"."
+        }
+      }
+    }
+  }
+}

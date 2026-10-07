@@ -160,19 +160,49 @@ def job_sort_key(jobid):
     return int(head) if head.isdigit() else 0
 
 
-def run_sacct(since):
+CORE_FIELDS = {"JobID", "JobName", "State", "ExitCode", "Submit", "Start", "End", "Elapsed"}
+
+
+def sacct_fields(state):
+    """SACCT_FIELDS this Slurm version knows. Older versions lack e.g. StdOut, StdErr and
+    SubmitLine, and sacct rejects the whole query on one unknown field. Cached for a day."""
+    cache = state.get("sacct_fields") or {}
+    if cache.get("fields") and time.time() - cache.get("t", 0) < 86400:
+        return cache["fields"]
+    out = run(["sacct", "--helpformat"])
+    known = {w.lower() for w in out.stdout.split()} if out.returncode == 0 else set()
+    fields = [f for f in SACCT_FIELDS if f in CORE_FIELDS or f.lower() in known]
+    state["sacct_fields"] = {"t": time.time(), "fields": fields}
+    return fields
+
+
+def run_sacct(since, fields):
     cmd = ["sacct", "-u", USER, "-X", "-n", "-P", "--delimiter", SEP,
-           "-S", since, "-o", ",".join(SACCT_FIELDS)]
+           "-S", since, "-o", ",".join(fields)]
     out = run(cmd)
     if out.returncode != 0:
         raise RuntimeError(out.stderr.strip() or "sacct failed")
     rows = []
     for line in out.stdout.splitlines():
         parts = line.split(SEP)
-        if len(parts) != len(SACCT_FIELDS):
+        if len(parts) != len(fields):
             continue
-        rows.append(dict(zip(SACCT_FIELDS, parts)))
+        row = dict.fromkeys(SACCT_FIELDS, "")
+        row.update(zip(fields, parts))
+        rows.append(row)
     return rows
+
+
+def run_squeue():
+    """{jobid: (workdir, command)} for queued/running jobs; fills gaps on older Slurm."""
+    out = run(["squeue", "-u", USER, "-h", "-o", "%i" + SEP + "%Z" + SEP + "%o"])
+    jobs = {}
+    if out.returncode == 0:
+        for line in out.stdout.splitlines():
+            parts = line.split(SEP)
+            if len(parts) == 3:
+                jobs[parts[0].strip()] = (parts[1].strip(), parts[2].strip())
+    return jobs
 
 
 def expand_path(p, job):
@@ -312,8 +342,11 @@ def sync(state, initial_days=14):
         since = time.strftime("%Y-%m-%dT%H:%M:%S",
                               time.localtime(state["last_sync"] - 6 * 3600))
     else:
-        since = "now-%ddays" % initial_days
-    rows = run_sacct(since)
+        since = time.strftime("%Y-%m-%dT00:00:00", time.localtime(time.time() - initial_days * 86400))
+    fields = sacct_fields(state)
+    rows = run_sacct(since, fields)
+    missing = {"WorkDir", "SubmitLine", "StdOut"} - set(fields)
+    queued = run_squeue() if missing else {}
     programs = load_programs()
     jobs = state["jobs"]
     # jobs outside the sacct window whose cached check predates the current rules
@@ -336,6 +369,7 @@ def sync(state, initial_days=14):
             "stdout": expand_path(r["StdOut"], r), "stderr": expand_path(r["StdErr"], r),
             "nodes": r["NodeList"], "reason": r["Reason"],
         }
+        fill_missing(job, prev, queued.get(jid))
         job["category"] = categorize(st)
         if job["category"] in ("completed", "attention"):
             cached = prev and prev.get("state") == st and prev.get("inspect")
@@ -349,6 +383,26 @@ def sync(state, initial_days=14):
     state["last_sync"] = time.time()
     state["sync_error"] = None
     return state
+
+
+def fill_missing(job, prev, queued):
+    """Fill fields an older sacct can't report from squeue, earlier polls, or Slurm defaults."""
+    prev = prev or {}
+    if queued:
+        workdir, command = queued
+        if not job["workdir"] and workdir:
+            job["workdir"] = workdir
+        if command and command != "(null)" and not job["submitline"]:
+            job["command"] = command
+    for k in ("workdir", "submitline", "stdout", "stderr", "command"):
+        if not job.get(k) and prev.get(k):
+            job[k] = prev[k]
+    if not job["submitline"] and job.get("command"):
+        job["submitline"] = "sbatch " + shlex.quote(job["command"])
+    if not job["stdout"] and job["workdir"]:
+        default = os.path.join(job["workdir"], "slurm-%s.out" % job["id"])
+        if os.path.isfile(default):
+            job["stdout"] = default
 
 
 def do_sync():
@@ -385,10 +439,24 @@ def sbatch_script(job):
     return script if os.path.isfile(script) else None
 
 
+def guess_script(job):
+    """A submit script named after the job, for Slurm versions without SubmitLine."""
+    for ext in (".slurm", ".sbatch", ".sh", ".job"):
+        for stem in stems(job):
+            p = os.path.join(job["workdir"], stem + ext)
+            if os.path.isfile(p):
+                return p
+    return None
+
+
 def resubmit_command(job, programs=None):
     """argv that reruns this job from its work directory, or None if it can't be rebuilt."""
     if sbatch_script(job):
         return shlex.split(job["submitline"])
+    if not job.get("submitline") and job.get("workdir"):
+        guessed = guess_script(job)
+        if guessed:
+            return ["sbatch", os.path.basename(guessed)]
     programs = programs or load_programs()
     ins = job.get("inspect") or {}
     prog = next((p for p in programs if p["name"] == ins.get("program")), None)
@@ -428,7 +496,9 @@ def build_board(state):
             "note": meta.get("note", ""),
             # only finished jobs need these, and skipping the rest avoids filesystem stats
             "script": resubmit_command(latest, programs) if finished else None,
-            "script_file": sbatch_script(latest) if finished else None,
+            "script_file": (sbatch_script(latest) or (guess_script(latest)
+                            if not latest.get("submitline") and latest.get("workdir") else None))
+                           if finished else None,
             "input": (ins.get("input") or find_input(latest, None, programs)) if finished else None,
         })
     calcs.sort(key=lambda c: job_sort_key(c["latest"]["id"]), reverse=True)

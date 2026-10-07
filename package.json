@@ -2,7 +2,7 @@
   "name": "slurmboard",
   "displayName": "Slurm Board",
   "description": "To-do style tracker for your Slurm calculations: running, pending, completed and the ones that died.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "migliaro",
   "icon": "media/icon.png",
   "galleryBanner": {

@@ -99,7 +99,7 @@ The ORCA markers have been checked against real output. The others follow each p
 **Steps**
 1. Download `slurmboard-<version>.vsix` from the [latest release](https://github.com/ignaciomigliaro/slurmboard/releases/latest).
 2. In VSCode, connected to the cluster: open the Extensions view → `⋯` menu → **Install from VSIX…** → pick the file. Install it on the cluster side (`SSH: <host>`) if asked.
-   Or, from a terminal on the cluster: `code --install-extension slurmboard-0.5.0.vsix`
+   Or, from a terminal on the cluster: `code --install-extension slurmboard-0.5.1.vsix`
 3. Run **Developer: Reload Window**. A checklist icon appears in the activity bar.
 
 The first sync loads the last 14 days of jobs. If that brings back old failures, use **Dismiss All in This Group** to start clean.

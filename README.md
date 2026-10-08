@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/ignaciomigliaro/slurmboard/releases/latest/download/slurmboard.vsix"><img src="https://raw.githubusercontent.com/ignaciomigliaro/slurmboard/main/images/download.png" width="300" alt="Download Slurm Board (latest .vsix)"></a>
+  <br><sub><a href="https://github.com/ignaciomigliaro/slurmboard/releases">All releases</a> · <a href="#install">How to install</a></sub>
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/ignaciomigliaro/slurmboard/main/images/hero.png" alt="Slurm Board sidebar showing calculations grouped into Needs attention, Running, Pending and Completed, with an ORCA error notification" width="100%">
 </p>
 
@@ -97,9 +102,9 @@ The ORCA markers have been checked against real output. The others follow each p
 - Optional, for viewing geometries: [Protein Viewer](https://marketplace.visualstudio.com/items?itemName=ArianJamasb.protein-viewer). You'll be offered a one-click install the first time you need it.
 
 **Steps**
-1. Download `slurmboard-<version>.vsix` from the [latest release](https://github.com/ignaciomigliaro/slurmboard/releases/latest).
+1. Download **[slurmboard.vsix](https://github.com/ignaciomigliaro/slurmboard/releases/latest/download/slurmboard.vsix)** (always the latest version), or pick a version from the [releases page](https://github.com/ignaciomigliaro/slurmboard/releases).
 2. In VSCode, connected to the cluster: open the Extensions view → `⋯` menu → **Install from VSIX…** → pick the file. Install it on the cluster side (`SSH: <host>`) if asked.
-   Or, from a terminal on the cluster: `code --install-extension slurmboard-0.5.1.vsix`
+   Or, from a terminal on the cluster: `code --install-extension slurmboard.vsix`
 3. Run **Developer: Reload Window**. A checklist icon appears in the activity bar.
 
 The first sync loads the last 14 days of jobs. If that brings back old failures, use **Dismiss All in This Group** to start clean.

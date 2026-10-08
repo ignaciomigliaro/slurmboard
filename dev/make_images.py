@@ -526,10 +526,22 @@ def icon():
     return s + "</svg>"
 
 
+def button():
+    W, H = 300, 64
+    s = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">'
+    s += '<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a86e0"/><stop offset="1" stop-color="#0063b8"/></linearGradient></defs>'
+    s += rect(2, 2, W - 4, H - 4, "url(#b)", 12, "#0a4f91", 1.5)
+    s += ('<g transform="translate(22,16)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'
+          '<path d="M16 2v18M8 13l8 8 8-8M4 28h24"/></g>')
+    s += text(70, 31, "Download Slurm Board", 17, "#ffffff", 700)
+    s += text(70, 49, "latest .vsix for VSCode", 12.5, "#d6e9ff", 500)
+    return s + "</svg>"
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     jobs = {"hero": hero, "detail": detail, "resubmit": resubmit, "confirm": confirm,
-            "geometry": geometry, "dismiss": dismiss}
+            "geometry": geometry, "dismiss": dismiss, "download": button}
     only = sys.argv[1:] or list(jobs) + ["icon"]
     for name in only:
         if name == "icon":

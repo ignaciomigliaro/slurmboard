@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """Package this folder as an installable .vsix without needing node/npm/vsce.
 
-    python3 build_vsix.py            -> slurmboard-<version>.vsix
+    python3 build_vsix.py            -> slurmboard-<version>.vsix and slurmboard.vsix
+
+slurmboard.vsix is the same file under a fixed name, so the README's download button
+(releases/latest/download/slurmboard.vsix) always gets the newest release.
 
 README images use https://raw.githubusercontent.com links: VSCode's extension page
 does not load images from the extension folder.
 """
 import json
 import os
+import shutil
 import zipfile
 from xml.sax.saxutils import escape
 
@@ -69,3 +73,4 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for f in FILES:
         z.write(os.path.join(HERE, f), "extension/" + f)
 print(out)
+shutil.copyfile(out, os.path.join(HERE, "%s.vsix" % pkg["name"]))
